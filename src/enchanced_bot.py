@@ -44,6 +44,7 @@ class EnhancedSmaCross(MicrostructureStrategy):
 
         self.crossover = bt.indicators.CrossOver(self.sma_fast, self.sma_slow)
         self.trades = []  # Track trades for plotting
+        self.equity_curve = []  # Track portfolio value for metrics
 
     def notify_trade(self, trade):
         if trade.justopened:
@@ -55,7 +56,9 @@ class EnhancedSmaCross(MicrostructureStrategy):
             })
 
     def next(self):
-        
+        # Track equity curve
+        self.equity_curve.append(self.broker.getvalue())
+
         super().next()
 
         #
@@ -159,7 +162,7 @@ def run_backtest(
     )
 
     # 5) Gera metrics.csv no mesmo formato do baseline, mas em results/enhanced
-    compute_metrics(df_plot, results, out_dir=str(out_dir))
+    compute_metrics(df_plot, results, out_dir=str(out_dir), equity_curve=strat.equity_curve)
 
     # 6) Mantém o dicionário de métricas dos analyzers (se quiser usar depois)
     sharpe = strat.analyzers.sharpe.get_analysis().get("sharperatio", None)

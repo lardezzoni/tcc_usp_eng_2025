@@ -16,8 +16,12 @@ class SmaCrossStrategy(bt.Strategy):
         self.sma_long = bt.ind.SMA(period=self.p.long_period)
         self.crossover = bt.ind.CrossOver(self.sma_short, self.sma_long)
         self.trades = []  # Track trades for plotting
+        self.equity_curve = []  # Track portfolio value for metrics
 
     def next(self):
+        # Track equity curve
+        self.equity_curve.append(self.broker.getvalue())
+
         if self.position.size == 0:
             if self.crossover > 0:
                 self.buy()
@@ -81,9 +85,9 @@ def run_backtest(data_path="data/MES_2023.csv", cash=100000.0):
         output_path="results/baseline/baseline_candlestick.png",
     )
 
-    compute_metrics(df, results, out_dir="results/baseline")
+    compute_metrics(df, results, out_dir="results/baseline", equity_curve=strat.equity_curve)
 
-    return results, df, trades
+    return results, df, trades, strat.equity_curve
 
 if __name__ == "__main__":
     os.makedirs("results/baseline", exist_ok=True)
