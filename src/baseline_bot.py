@@ -3,6 +3,9 @@ import datetime
 import pandas as pd
 import math
 import os
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend for saving figures
+import matplotlib.pyplot as plt
 from metrics import compute_metrics
 from utils import prepare_csv
 
@@ -55,10 +58,18 @@ def run_backtest(data_path="data/MES_2023.csv", cash=100000.0):
     results = cerebro.run()
     print("Final Portfolio Value:", cerebro.broker.getvalue())
 
-    cerebro.plot(style='candlestick')
+    # Generate and save candlestick chart
+    figs = cerebro.plot(style='candlestick')
+    if figs and figs[0]:
+        fig = figs[0][0]
+        fig.savefig("results/baseline/baseline_candlestick.png", dpi=300, bbox_inches="tight")
+        print("Saved chart to results/baseline/baseline_candlestick.png")
+    plt.close('all')
 
     df = pd.read_csv(clean_path)
     compute_metrics(df, results, out_dir="results/baseline")
+
+    return results, df
 
 if __name__ == "__main__":
     os.makedirs("results/baseline", exist_ok=True)

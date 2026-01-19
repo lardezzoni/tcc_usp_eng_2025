@@ -2,6 +2,9 @@
 import argparse
 from pathlib import Path
 
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend for saving figures
+import matplotlib.pyplot as plt
 import backtrader as bt
 import pandas as pd
 
@@ -135,8 +138,15 @@ def run_backtest(
     results = cerebro.run()
     strat = results[0]
 
-    if plot:
-        cerebro.plot(style="candlestick")
+    # Generate and save candlestick chart (always save, plot controls display)
+    figs = cerebro.plot(style="candlestick")
+    out_path = Path(out_dir)
+    out_path.mkdir(parents=True, exist_ok=True)
+    if figs and figs[0]:
+        fig = figs[0][0]
+        fig.savefig(out_path / "enhanced_candlestick.png", dpi=300, bbox_inches="tight")
+        print(f"Saved chart to {out_path / 'enhanced_candlestick.png'}")
+    plt.close('all')
 
     # 5) Gera metrics.csv no mesmo formato do baseline, mas em results/enhanced
     compute_metrics(df, results, out_dir=str(out_dir))
@@ -155,7 +165,7 @@ def run_backtest(
         "annual_return_pct": annual_return_pct,
     }
 
-    return strat, metrics
+    return strat, metrics, df
 
 
 
@@ -196,7 +206,7 @@ def main():
 
     args = parser.parse_args()
 
-    strat, metrics = run_backtest(
+    strat, metrics, _ = run_backtest(
         data_path=args.data,
         cash=args.cash,
         target_vol=args.target_vol,
