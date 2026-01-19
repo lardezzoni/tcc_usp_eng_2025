@@ -17,15 +17,15 @@ class SmaCrossStrategy(bt.Strategy):
 
     def next(self):
         if self.position.size == 0:
-            if self.crossover > 0:  # sinal de compra
+            if self.crossover > 0:  
                 self.buy()
-            elif self.crossover < 0:  # sinal de venda
+            elif self.crossover < 0:  
                 self.sell()
         elif self.position.size > 0 and self.crossover < 0:
-            self.close()  # encerra posição comprada
+            self.close()  
             self.sell()
         elif self.position.size < 0 and self.crossover > 0:
-            self.close()  # encerra posição vendida
+            self.close()  
             self.buy()
 
 
