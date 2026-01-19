@@ -3,11 +3,9 @@ import datetime
 import pandas as pd
 import math
 import os
-import matplotlib
-matplotlib.use('Agg')  # Use non-interactive backend for saving figures
-import matplotlib.pyplot as plt
 from metrics import compute_metrics
 from utils import prepare_csv
+from plotting import plot_candlestick_with_trades
 
 
 class SmaCrossStrategy(bt.Strategy):
@@ -17,19 +15,29 @@ class SmaCrossStrategy(bt.Strategy):
         self.sma_short = bt.ind.SMA(period=self.p.short_period)
         self.sma_long = bt.ind.SMA(period=self.p.long_period)
         self.crossover = bt.ind.CrossOver(self.sma_short, self.sma_long)
+        self.trades = []  # Track trades for plotting
 
     def next(self):
         if self.position.size == 0:
-            if self.crossover > 0:  
+            if self.crossover > 0:
                 self.buy()
-            elif self.crossover < 0:  
+            elif self.crossover < 0:
                 self.sell()
         elif self.position.size > 0 and self.crossover < 0:
-            self.close()  
+            self.close()
             self.sell()
         elif self.position.size < 0 and self.crossover > 0:
-            self.close()  
+            self.close()
             self.buy()
+
+    def notify_trade(self, trade):
+        if trade.justopened:
+            trade_type = 'buy' if trade.size > 0 else 'sell'
+            self.trades.append({
+                'date': self.data.datetime.datetime(),
+                'type': trade_type,
+                'price': trade.price,
+            })
 
 
 
@@ -58,18 +66,24 @@ def run_backtest(data_path="data/MES_2023.csv", cash=100000.0):
     results = cerebro.run()
     print("Final Portfolio Value:", cerebro.broker.getvalue())
 
-    # Generate and save candlestick chart
-    figs = cerebro.plot(style='candlestick')
-    if figs and figs[0]:
-        fig = figs[0][0]
-        fig.savefig("results/baseline/baseline_candlestick.png", dpi=300, bbox_inches="tight")
-        print("Saved chart to results/baseline/baseline_candlestick.png")
-    plt.close('all')
+    # Get strategy and trades
+    strat = results[0]
+    trades = strat.trades
 
+    # Load data for plotting
     df = pd.read_csv(clean_path)
+
+    # Generate clean academic chart
+    plot_candlestick_with_trades(
+        df=df,
+        trades=trades,
+        title="Baseline: Estratégia SMA Crossover (10/20)",
+        output_path="results/baseline/baseline_candlestick.png",
+    )
+
     compute_metrics(df, results, out_dir="results/baseline")
 
-    return results, df
+    return results, df, trades
 
 if __name__ == "__main__":
     os.makedirs("results/baseline", exist_ok=True)

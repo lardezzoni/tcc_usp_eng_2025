@@ -2,9 +2,6 @@
 import argparse
 from pathlib import Path
 
-import matplotlib
-matplotlib.use('Agg')  # Use non-interactive backend for saving figures
-import matplotlib.pyplot as plt
 import backtrader as bt
 import pandas as pd
 
@@ -14,7 +11,7 @@ from risk import VolatilityTargetSizer
 
 from utils import prepare_csv
 from metrics import compute_metrics
-from pathlib import Path
+from plotting import plot_candlestick_with_trades
 
 DEFAULT_RAW_DATA = Path("data") / "MES_2023.csv"
 DEFAULT_CLEAN_DATA = Path("data") / "MES_2023_clean.csv"
@@ -46,6 +43,16 @@ class EnhancedSmaCross(MicrostructureStrategy):
         )
 
         self.crossover = bt.indicators.CrossOver(self.sma_fast, self.sma_slow)
+        self.trades = []  # Track trades for plotting
+
+    def notify_trade(self, trade):
+        if trade.justopened:
+            trade_type = 'buy' if trade.size > 0 else 'sell'
+            self.trades.append({
+                'date': self.data.datetime.datetime(),
+                'type': trade_type,
+                'price': trade.price,
+            })
 
     def next(self):
         
@@ -138,18 +145,21 @@ def run_backtest(
     results = cerebro.run()
     strat = results[0]
 
-    # Generate and save candlestick chart (always save, plot controls display)
-    figs = cerebro.plot(style="candlestick")
+    # Generate clean academic chart
     out_path = Path(out_dir)
     out_path.mkdir(parents=True, exist_ok=True)
-    if figs and figs[0]:
-        fig = figs[0][0]
-        fig.savefig(out_path / "enhanced_candlestick.png", dpi=300, bbox_inches="tight")
-        print(f"Saved chart to {out_path / 'enhanced_candlestick.png'}")
-    plt.close('all')
+
+    # Reset index for plotting (need datetime as column)
+    df_plot = df.reset_index()
+    plot_candlestick_with_trades(
+        df=df_plot,
+        trades=strat.trades,
+        title="Aprimorado: SMA + Microestrutura + Vol. Targeting",
+        output_path=str(out_path / "enhanced_candlestick.png"),
+    )
 
     # 5) Gera metrics.csv no mesmo formato do baseline, mas em results/enhanced
-    compute_metrics(df, results, out_dir=str(out_dir))
+    compute_metrics(df_plot, results, out_dir=str(out_dir))
 
     # 6) Mantém o dicionário de métricas dos analyzers (se quiser usar depois)
     sharpe = strat.analyzers.sharpe.get_analysis().get("sharperatio", None)
