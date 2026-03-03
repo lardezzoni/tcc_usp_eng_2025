@@ -22,3 +22,11 @@ env/
 # OS
 .DS_Store
 Thumbs.db
+
+# Testing / Coverage
+.coverage
+.pytest_cache/
+.hypothesis/
+htmlcov/
+mutants/
+.mutmut-cache
