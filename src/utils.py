@@ -15,8 +15,8 @@ def prepare_csv(input_path="data/MES_2023.csv", output_path="data/MES_2023_clean
         df["datetime"] = pd.to_datetime(df["Date"])
     elif "Date" not in df.columns and "Unnamed: 0" in df.columns:
         df["datetime"] = pd.to_datetime(df["Unnamed: 0"])
-    elif "Price" in df.columns:  
-        df["datetime"] = pd.to_datetime(df["Price"], errors="coerce")
+    elif "Price" in df.columns:
+        df["datetime"] = pd.to_datetime(df["Price"], errors="coerce", format="ISO8601")
     else:
         raise ValueError("Nenhuma coluna de data válida encontrada no CSV!")
 

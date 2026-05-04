@@ -334,7 +334,7 @@ def main():
     # ----------------------------
     # Rodar 1x FINAL com plot=True (1 gráfico)
     # ----------------------------
-    _ = run_backtest(
+    final_perf = run_backtest(
         data_path=base["data_path"],
         cash=base["cash"],
         fast_period=base["fast_period"],
@@ -358,6 +358,12 @@ def main():
     print(f"Config final:  {cfg_path}")
     print(f"Final metrics: {final_root / 'metrics.csv'}")
     print(f"Final chart:   {final_root / 'enhanced_candlestick.png'}")
+    print("-" * 70)
+    print("Resultado financeiro final:")
+    print(f"  Capital inicial: {final_perf['StartingEquity']:>14,.2f}")
+    print(f"  Capital final:   {final_perf['FinalEquity']:>14,.2f}")
+    print(f"  PnL final:       {final_perf['PnL']:>14,.2f}")
+    print(f"  Retorno total:   {final_perf['TotalReturn'] * 100:>13.2f}%")
     print("=" * 70 + "\n")
 
 

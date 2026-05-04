@@ -56,11 +56,27 @@ def compute_metrics(df, results, out_dir="results", equity_curve=None):
     # Annualized Return
     annualized_return = mean_ret * 252
 
+    # Final PnL from equity curve
+    if equity_curve is not None and len(equity_curve) > 1:
+        starting_equity = float(equity_curve[0])
+        final_equity = float(equity_curve[-1])
+        pnl = final_equity - starting_equity
+        total_return = pnl / starting_equity if starting_equity != 0 else 0.0
+    else:
+        starting_equity = float("nan")
+        final_equity = float("nan")
+        pnl = float("nan")
+        total_return = float("nan")
+
     metrics = {
         "Sharpe": sharpe,
         "Sortino": sortino,
         "MaxDrawdown": max_dd,
         "AnnualizedReturn": annualized_return,
+        "StartingEquity": starting_equity,
+        "FinalEquity": final_equity,
+        "PnL": pnl,
+        "TotalReturn": total_return,
     }
 
     os.makedirs(out_dir, exist_ok=True)
